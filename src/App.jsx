@@ -368,10 +368,10 @@ export default function App() {
           }}
           onFallbackToDemo={() => {
             setLoadError(null);
-            if (activeSceneId === 'demo-studio') {
+            if (activeSceneId === DEFAULT_SCENE_ID) {
               setSceneReloadToken((token) => token + 1);
             } else {
-              setActiveSceneId('demo-studio');
+              setActiveSceneId(DEFAULT_SCENE_ID);
             }
           }}
         />

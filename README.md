@@ -19,10 +19,10 @@ npm run dev
 
 Open [localhost:3000](http://localhost:3000) and select **Explore the space**. The repository includes the viewer assets. Source videos and Python tools are not required to run the application.
 
-The default scene is the C5307 classroom, reconstructed from one continuous Sony video. Use the scene menu to compare reconstruction variants or open the procedural reference room. To open a scene directly, use its registry ID in the URL, for example:
+The default scene is the NammaSpace classroom, a Gaussian-splat scan reconstructed from nine 4K clips and 46 stills (COLMAP poses, Brush training) and aligned to metric Y-up coordinates. Use the scene menu to compare it with the one-video reconstruction variants and other captured rooms. The viewer lists only real reconstructions. To open a scene directly, use its registry ID in the URL, for example:
 
 ```text
-http://localhost:3000/?scene=demo-studio
+http://localhost:3000/?scene=classroom-c5307-single-video
 ```
 
 ## Features
@@ -34,7 +34,7 @@ http://localhost:3000/?scene=demo-studio
 - **Collision inspection:** Show room boundaries and obstacle volumes with the **Colliders** overlay.
 - **Scene metadata:** Inspect capture sources, calibration status, loading progress, and scene statistics.
 
-Navigation features depend on each scene's configuration. The procedural reference room includes obstacle volumes and points of interest for testing these features.
+Navigation features depend on each scene's configuration. The default classroom scan includes desk, stage, and seating obstacle volumes and points of interest. A procedural reference room with full navigation data is kept in `src/config/fixtureScenes.js` for the test suite.
 
 ## Controls
 
@@ -62,7 +62,7 @@ Local imports use placeholder navigation bounds. They need calibration before th
 ### Register a scene
 
 1. Place mesh assets in `public/models/` or splat assets in `public/scenes/`.
-2. Add an entry to [src/config/scenes.js](src/config/scenes.js) with the asset path and mode: `glb` or `splat`.
+2. Add an entry to [src/config/scenes.js](src/config/scenes.js) with the asset path and mode: `glb` or `splat`. Only real reconstructions belong in this registry; synthetic test scenes go in [src/config/fixtureScenes.js](src/config/fixtureScenes.js).
 3. Align the scene to Y-up with the floor at `Y = 0`. Define its scale, camera spawn, room bounds, obstacle volumes, and points of interest in the same coordinate system.
 4. Inspect the **Colliders** overlay and test each boundary and route.
 
@@ -85,7 +85,7 @@ Run `npm run build` before `npm run start`. Both servers use port 3000 by defaul
 src/
   app/          Next.js routes, layout, and metadata
   components/   Viewer interface and controls
-  config/       Scene registry and navigation configuration
+  config/       Scene registry (real scans) and test fixture scenes
   styles/       Global and viewer styles
   viewer/       Rendering, asset loading, movement, collision, and routing
   App.jsx       Application state and viewer composition
@@ -93,7 +93,7 @@ public/
   models/       Mesh assets
   scenes/       Gaussian splat assets
 scripts/        Capture processing, reconstruction, training, and export tools
-tests/          Spatial engine tests and sample capture frames
+tests/          Spatial engine tests, sample capture frames, and synthetic fixture assets
 docs/           Capture, reconstruction, architecture, and verification guides
 ```
 
@@ -113,11 +113,13 @@ Serve the generated `out/` directory over HTTP.
 
 ## Reconstruction and navigation limits
 
-The default C5307 classroom uses only `assets/C5307.MP4`. Its physical dimensions are unknown, so camera positions and route lengths use relative scene units. Walking boundaries are visual estimates. Furniture collision volumes and points of interest are not configured for this scene.
+The default classroom scan's metric scale comes from an assumed 0.75 m desk height rather than a tape measurement, so treat its dimensions as approximate until one desk is measured.
+
+The one-video C5307 classroom uses only `assets/C5307.MP4`. Its physical dimensions are unknown, so camera positions and route lengths use relative scene units. Walking boundaries are visual estimates. Furniture collision volumes and points of interest are not configured for this scene.
 
 Reconstruction detail depends on capture coverage. Surfaces with limited visibility can appear blurred, incomplete, or duplicated when viewed from new angles.
 
-Collision and routing use explicitly configured obstacle volumes. The viewer does not infer walkable areas from mesh geometry or Gaussian splats. Generated sample assets and the procedural reference room serve as test fixtures. Raw source videos and intermediate reconstruction outputs are excluded from Git.
+Collision and routing use explicitly configured obstacle volumes. The viewer does not infer walkable areas from mesh geometry or Gaussian splats. Generated sample assets and the procedural reference room are test fixtures only and are not listed in the viewer. Raw source videos and intermediate reconstruction outputs are excluded from Git.
 
 ## Documentation
 
@@ -125,7 +127,7 @@ Collision and routing use explicitly configured obstacle volumes. The viewer doe
 | --- | --- |
 | [Capture procedure](docs/capture-sop.md) | How to record a room for reconstruction |
 | [Reconstruction workflow](docs/reconstruction-workflow.md) | Prepare meshes and splats for the viewer |
-| [C5307 reconstruction](docs/c5307-reconstruction.md) | Rebuild the default classroom on Apple Silicon |
+| [C5307 reconstruction](docs/c5307-reconstruction.md) | Rebuild the one-video C5307 classroom on Apple Silicon |
 | [C5304 reconstruction](docs/single-video-reconstruction.md) | Earlier one-video experiment, results, and limitations |
 | [Scene calibration](docs/real-scan-pilot.md) | Configure scale, bounds, obstacles, and points of interest |
 | [Architecture](docs/architecture.md) | Viewer modules and data flow |

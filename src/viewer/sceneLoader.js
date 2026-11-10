@@ -152,6 +152,12 @@ async function loadProceduralDemoScene(sceneConfig) {
   };
 }
 
+// The placeholder grid floor is only for uncalibrated previews; it would z-fight a real scanned floor.
+// An explicit `showCalibrationStage` flag on the scene wins over the `isReconstructed` default.
+function shouldShowCalibrationStage(sceneConfig) {
+  return sceneConfig.showCalibrationStage ?? !sceneConfig.isReconstructed;
+}
+
 /**
  * Mode 2: Reconstructed GLB / glTF Mesh Loader via Three.js GLTFLoader.
  */
@@ -222,7 +228,9 @@ async function loadGlbMeshScene(sceneConfig, onProgress) {
   }
   const rootGroup = new THREE.Group();
   rootGroup.name = `GLBScene_${sceneConfig.id}`;
-  rootGroup.add(buildReconstructionCalibrationStage(sceneConfig.roomBounds));
+  if (shouldShowCalibrationStage(sceneConfig)) {
+    rootGroup.add(buildReconstructionCalibrationStage(sceneConfig.roomBounds));
+  }
 
   rootGroup.add(modelRoot);
 
@@ -318,7 +326,7 @@ async function loadGaussianSplatScene(sceneConfig, onProgress, signal) {
   const splatCount = validateSplatBuffer(buffer);
   const rootGroup = new THREE.Group();
   rootGroup.name = `GaussianSplatScene_${sceneConfig.id}`;
-  if (sceneConfig.showCalibrationStage !== false) {
+  if (shouldShowCalibrationStage(sceneConfig)) {
     rootGroup.add(buildReconstructionCalibrationStage(sceneConfig.roomBounds));
   }
   const viewer = new GaussianSplats3D.DropInViewer({

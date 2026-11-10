@@ -43,11 +43,12 @@ Use [COLMAP](https://colmap.github.io/tutorial) to estimate poses, dense points,
 ```text
 public/
   models/
-    sample-room-scan.glb      # Included generated GLB demonstration asset
     your-room-scan.glb        # Place your exported GLB/glTF meshes here
   scenes/
-    sample-capture.splat      # Included synthetic 32-byte Gaussian Splat demonstration asset
     your-capture.splat        # Place your exported .splat captures here
+tests/fixtures/
+  sample-room-scan.glb        # Generated GLB test asset (test suite only, not shown in the viewer)
+  sample-capture.splat        # Synthetic 32-byte Gaussian Splat test asset (test suite only)
 ```
 
 ---

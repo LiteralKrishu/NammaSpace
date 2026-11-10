@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import { SplatParser } from '@mkkellogg/gaussian-splats-3d';
 import { CollisionSystem } from '../src/viewer/collision.js';
 import { FirstPersonController } from '../src/viewer/controls.js';
-import { SCENES, DEFAULT_SCENE_ID, getSceneList } from '../src/config/scenes.js';
+import { SCENES as REAL_SCENES, DEFAULT_SCENE_ID, getSceneList } from '../src/config/scenes.js';
+import { FIXTURE_SCENES } from '../src/config/fixtureScenes.js';
+const SCENES = { ...FIXTURE_SCENES, ...REAL_SCENES };
 import { validateSplatBuffer, validateSceneConfig, loadSpatialScene } from '../src/viewer/sceneLoader.js';
 
 const room = {
@@ -30,7 +32,7 @@ test('standard .splat fixture preserves anisotropic scale, RGBA and quaternion',
 });
 
 test('sample .splat is well formed and accepted by installed parser', () => {
-  const file = readFileSync(new URL('../public/scenes/sample-capture.splat', import.meta.url));
+  const file = readFileSync(new URL('./fixtures/sample-capture.splat', import.meta.url));
   const bytes = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
   assert.equal(validateSplatBuffer(bytes), 2153);
   assert.equal(SplatParser.parseStandardSplatToUncompressedSplatArray(bytes).splats.length, 2153);
@@ -43,9 +45,19 @@ test('metric classroom asset contains valid Gaussian records', () => {
   assert.equal(validateSplatBuffer(bytes), 558361);
 });
 
-test('default one-video room has valid splats and explicit relative scale', () => {
-  assert.equal(DEFAULT_SCENE_ID, 'classroom-c5307-single-video');
+test('default scene is the metric classroom scan and ships a valid splat', () => {
+  assert.equal(DEFAULT_SCENE_ID, 'nammaspace-classroom');
   const scene = SCENES[DEFAULT_SCENE_ID];
+  assert.equal(getSceneList()[0].id, DEFAULT_SCENE_ID);
+  assert.equal(scene.calibration.metersPerAssetUnit, 1);
+  const file = readFileSync(new URL(`../public${scene.assetUrl}`, import.meta.url));
+  const bytes = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
+  assert.equal(validateSplatBuffer(bytes), 1500000);
+  assert.doesNotThrow(() => validateSceneConfig(scene));
+});
+
+test('C5307 one-video room has valid splats and explicit relative scale', () => {
+  const scene = SCENES['classroom-c5307-single-video'];
   assert.equal(scene.calibration.scaleType, 'relative');
   assert.equal(scene.roomBoundsKnown, false);
   assert.match(scene.calibration.captureSource, /C5307\.MP4/);
@@ -66,7 +78,8 @@ test('one-video attempts are selectable in order and ship with their own models'
     ['classroom-c5305-one-video', 559056, 'C5305'],
     ['classroom-single-video', 776728, 'C5304']
   ];
-  assert.deepEqual(getSceneList().slice(0, attempts.length).map((scene) => scene.id),
+  const attemptIds = new Set(attempts.map(([id]) => id));
+  assert.deepEqual(getSceneList().filter((scene) => attemptIds.has(scene.id)).map((scene) => scene.id),
     attempts.map(([id]) => id));
   for (const [id, count, source] of attempts) {
     const scene = SCENES[id];
@@ -215,4 +228,13 @@ test('clearing a POI route stops its camera travel', () => {
   controller.cancelTransition();
   controller.update(0.1);
   assert.ok(controller.camera.position.equals(stoppedAt), 'the camera stayed in place after route clear');
+});
+
+test('viewer registry lists only real reconstructions', () => {
+  const scenes = Object.values(REAL_SCENES);
+  assert.ok(scenes.length > 0);
+  for (const scene of scenes) {
+    assert.equal(scene.isReconstructed, true, scene.id);
+    assert.notEqual(scene.mode, 'demo', scene.id);
+  }
 });
